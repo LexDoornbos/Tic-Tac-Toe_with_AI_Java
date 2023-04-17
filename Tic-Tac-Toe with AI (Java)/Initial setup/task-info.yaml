@@ -102,30 +102,9 @@ files:
         }
     }
   learner_created: false
-feedback_link: https://hyperskill.org/projects/81/stages/447/implement#comment
-status: Failed
+feedback_link: https://hyperskill.org/learn/step/7434#comment
+status: Solved
 feedback:
-  message: |-
-    Wrong answer in test #1
-
-    The game result is wrong. Expected result &quot;X wins&quot;.
-
-    Please find below the output of your program during this failed test.
-    Note that the &#39;&gt;&#39; character indicates the beginning of the input line.
-
-    ---
-
-    Enter the cells: &gt; _XXOO_OX_
-    ---------
-    |   X X |
-    | O O   |
-    | O X   |
-    ---------
-    Enter the coordinates: &gt; 1 1
-    ---------
-    | X X X |
-    | O O   |
-    | O X   |
-    ---------
-  time: "Fri, 14 Apr 2023 01:09:13 UTC"
-record: -1
+  message: Congratulations!
+  time: "Mon, 17 Apr 2023 11:03:47 UTC"
+record: 1
