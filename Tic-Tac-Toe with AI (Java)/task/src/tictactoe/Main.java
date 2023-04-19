@@ -1,39 +1,43 @@
 package tictactoe;
+import java.util.Objects;
 import java.util.Scanner;
 import java.util.Random;
 
 public class Main {
 
+    final static Scanner scanner = new Scanner(System.in);
+    static char[][] gameGrid = new char[3][3]; // create empty game grid 3 x 3.
+    static char playerSymbol = 'X'; // declare playerSymbol variable and initialize it to 'X'.
+    static int countMoves = 0;
+
     public static void main(String[] args) {
 
-        char[][] gameGrid = new char[3][3]; // create empty game grid 3 x 3.
-        char playerSymbol = 'X'; // declare playerSymbol variable and initialize it to 'X'.
+/*        char[][] gameGrid = new char[3][3]; // create empty game grid 3 x 3.
+        char playerSymbol = 'X'; // declare playerSymbol variable and initialize it to 'X'.*/
 
         boolean menuLoop = true;
 
         String gameState = "RUNNING"; // declare gameState variable and initialize it to "RUNNING".
 
-        Scanner scanner = new Scanner(System.in); // Create a scanner object to read user input.
-
-        String action;
-        String playerX = "";
-        String playerO = "";
-
         emptyGameGrid(gameGrid);
 
-        menuLoop = menuLoop(gameGrid, playerSymbol, menuLoop, gameState, scanner, playerX, playerO);
+        menuLoop(gameGrid, menuLoop, gameState);
     }
 
-    private static boolean menuLoop(char[][] gameGrid, char playerSymbol, boolean menuLoop, String gameState, Scanner scanner, String playerX, String playerO) {
+    private static void menuLoop(char[][] gameGrid, boolean menuLoop, String gameState) {
         String action;
         // Main game loop.
         while (menuLoop) {
             // Show menu
             String[] input = showMenu().split(" ");
+            String playerX;
+            String playerO;
 
-            if (input.length == 1) {
-                action = input[0];
-            } else if (input.length == 3) {
+            if (input.length == 1 && input[0].equals("exit")) {
+                menuLoop = false;
+                System.exit(0);
+            }
+            if (input.length == 3) {
                 action = input[0];
                 playerX = input[1];
                 playerO = input[2];
@@ -42,29 +46,27 @@ public class Main {
                 continue;
             }
 
-            if (action.equals("exit")) {
-                return false;
-//                System.exit(0);
-            } else if (action.equals("start")) {
+            if (action.equals("start")) {
                 if ((playerX.equals("user") || playerX.equals("easy")) && (playerO.equals("user") || playerO.equals("easy"))) {
                     showGameGrid(gameGrid);
-                    if (playerX.equals("user")) {
-                        while (gameState.equals("RUNNING")) {
-                            userMove(scanner, gameGrid, playerSymbol);
-                            gameState = checkGameState(gameGrid);
-                            easyAIMove(gameGrid);
-                            gameState = checkGameState(gameGrid);
-                        }
+                    String player = playerX;
+                    while (gameState.equals("RUNNING")) {
+                        makeMove(gameGrid, player, countMoves);
+                        countMoves += 1;
+                        gameState = checkGameState(gameGrid);
+                        player = changeTurn(player, playerX, playerO);
                     }
+                    emptyGameGrid(Main.gameGrid);
+                    countMoves = 0;
+                    gameState = checkGameState(gameGrid);
                 } else {
                     System.out.println("Bad parameters!");
                 }
-
             } else {
                 System.out.println("Bad parameters!");
             }
         }
-        return true;
+        Main.gameGrid = emptyGameGrid(gameGrid);
     }
 
 /*            // Ask user to make a move.
@@ -88,36 +90,30 @@ public class Main {
         } else {
             System.out.println("Player " + playerSymbol + " wins");*/
 
-    class Player {
-
-        String playerType;
-        char playerSymbol;
-    }
 
     /**
      * Function to show the menu for a new game or to exit the program.
-     * @return
+     * @return the input line
      */
     private static String showMenu() {
         // get input string from user
         System.out.print("Input command: ");
         Scanner scanner = new Scanner(System.in);
-        String input = scanner.nextLine();
-        return input;
+        return scanner.nextLine();
     }
 
     /**
      * Function to change the player turn.
-     * @param playerSymbol takes playerSymbol, flips the character,
+     * @param player takes player, flips the turn,
      * @return and returns that character
      */
-    private static char changeTurn(char playerSymbol) {
-        if (playerSymbol == 'X') {
-            playerSymbol = 'O';
-        } else if (playerSymbol == 'O') {
-            playerSymbol = 'X';
+    private static String changeTurn(String player, String playerX, String playerO) {
+        if (Objects.equals(player, playerX)) {
+            player = playerO;
+        } else {
+            player = playerX;
         }
-        return playerSymbol;
+        return player;
     }
 
     /**
@@ -143,45 +139,49 @@ public class Main {
         // collect them in array checkLines
         char[][] checkLines = {hline1, hline2, hline3, vline1, vline2, vline3, diag1, diag2};
 
-        /*
-         * Check if the gameGrid has any empty cells left.
-         */
-        boolean isFilled = true;
-        for (char[] row : gameGrid) {
-            for (char cell : row) {
-                if (cell != 'X' && cell != 'O') {
-                    isFilled = false;
-                    break; // Break first loop
-                }
-            }
-            if (!isFilled) {
-                break; // Break second loop if non-X or non-O cell has already been found. isFilled = false.
-            }
-        }
-        if (isFilled) {
-            return "DRAW"; // If isFilled = true -> Return 'DRAW' for draw
-        }
-
         // Check all horizontal, vertical and diagonal lines for winners and return string declaring who won.
         for (char[] line: checkLines) {
             if (line[0] == line[1] && line[1] == line[2] && line[0] != ' ') {
                 System.out.println(line[0] + " wins");
-                return "gameWON";
+                return "gameWON"; // if the game has a winner: return "gameWON" as the gameState.
             }
         }
 
-        // If both the isFilled loop and gameWON loop do not return anything: return "Running".
+        /*
+         * Check if the gameGrid has any empty cells left.
+         */
+        int emptyCells = 0;
+        for (int i = 0; i <3; i++) {
+            for (int j = 0; j <3; j++) {
+                if (gameGrid[i][j] == ' ') {
+                    ++emptyCells;
+                }
+            }
+        }
+        if (emptyCells == 0){
+            System.out.println("Draw");
+            return "DRAW";} // if the game has a no winner and no more empty cells: return "DRAW" as the gameState.
+
+        // If both the isFilled loop and gameWON loop do not return anything: return "RUNNING" as the gameState.
         return "RUNNING";
+    }
+
+    private static void makeMove(char[][] gameGrid, String player, int countMoves) {
+        if (player.equals("user")){userMove(gameGrid, countMoves);}
+        if (player.equals("easy")){easyAIMove(gameGrid, countMoves);}
     }
 
     /**
      * Function for user to make a move.
-     * @param scanner to read user's input
      * @param gameGrid get gameGrid and add move
-     * @param playerSymbol to know which symbol to insert
+     * @param countMoves to determine X or O.
      */
-    private static void userMove(Scanner scanner, char[][] gameGrid, char playerSymbol) {
+    private static void userMove(char[][] gameGrid, int countMoves) {
         boolean loop = true;
+        if (countMoves % 2 == 0) {
+            playerSymbol = 'X';
+        } else { playerSymbol = 'O';}
+
         do {
             System.out.print("Enter the coordinates: ");
             String input = scanner.nextLine();
@@ -215,7 +215,10 @@ public class Main {
      * Function for AI to make an easy move.
      * @param gameGrid get gameGrid to make move on
      */
-    private static void easyAIMove(char[][] gameGrid) {
+    private static void easyAIMove(char[][] gameGrid, int countMoves) {
+        if (countMoves % 2 == 0) {
+            playerSymbol = 'X';
+        } else { playerSymbol = 'O';}
         System.out.println("Making move level \"easy\"");
         Random random = new Random();
         int x, y;
@@ -224,7 +227,7 @@ public class Main {
             x = random.nextInt(3);
             y = random.nextInt(3);
             if (gameGrid[x][y] == ' ') {
-                gameGrid[x][y] = 'O';
+                gameGrid[x][y] = playerSymbol;
                 showGameGrid(gameGrid);
                 loop = false;
             }
@@ -252,11 +255,12 @@ public class Main {
      * Function to create gameGrid filled with empty spaces.
      * @param gameGrid 2 dimensional array, representing grid of 3 x 3 cells
      */
-    private static void emptyGameGrid(char[][] gameGrid) {
+    private static char[][] emptyGameGrid(char[][] gameGrid) {
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 3; col++) {
                 gameGrid[row][col] = ' ';
             }
         }
+        return gameGrid;
     }
 }
