@@ -7,13 +7,10 @@ public class Main {
 
     final static Scanner scanner = new Scanner(System.in);
     static char[][] gameGrid = new char[3][3]; // create empty game grid 3 x 3.
-    static char playerSymbol = 'X'; // declare playerSymbol variable and initialize it to 'X'.
-    static int countMoves = 0;
+    private static char playerSymbol; // declare playerSymbol variable.
+    private static int countMoves = 0;
 
     public static void main(String[] args) {
-
-/*        char[][] gameGrid = new char[3][3]; // create empty game grid 3 x 3.
-        char playerSymbol = 'X'; // declare playerSymbol variable and initialize it to 'X'.*/
 
         boolean menuLoop = true;
 
@@ -26,70 +23,67 @@ public class Main {
 
     private static void menuLoop(char[][] gameGrid, boolean menuLoop, String gameState) {
         String action;
-        // Main game loop.
+        // Main game menu loop.
         while (menuLoop) {
             // Show menu
-            String[] input = showMenu().split(" ");
+            String[] input = showMenu().split(" "); // store keyword(s) in input array
             String playerX;
             String playerO;
 
+            // if only word entered is "exit", end the program.
             if (input.length == 1 && input[0].equals("exit")) {
                 menuLoop = false;
                 System.exit(0);
             }
+
+            // if 3 words are entered: assign them to action, playerX and playerO respectively.
             if (input.length == 3) {
                 action = input[0];
                 playerX = input[1];
                 playerO = input[2];
-            } else {
+            } else { // if more or less words entered: give warning and continue.
                 System.out.println("Bad parameters!");
                 continue;
             }
 
+            // check if all 3 words are accepted parameters.
             if (action.equals("start")) {
-                if ((playerX.equals("user") || playerX.equals("easy")) && (playerO.equals("user") || playerO.equals("easy"))) {
+                if ((playerX.equals("user") || playerX.equals("easy") || playerX.equals("medium")) &&
+                   (playerO.equals("user") || playerO.equals("easy") || playerO.equals("medium"))) {
+
+                    // if accepted parameters -> execute:
                     showGameGrid(gameGrid);
-                    String player = playerX;
+                    String player = playerX; // assign playerX as first player
+
+                    // gameloop start
                     while (gameState.equals("RUNNING")) {
                         makeMove(gameGrid, player, countMoves);
                         countMoves += 1;
                         gameState = checkGameState(gameGrid);
+                        if (gameState.equals("XWIN")) {
+                            System.out.println("X wins");
+                        }
+                        if (gameState.equals("OWIN")) {
+                            System.out.println("O wins");
+                        }
+                        if (gameState.equals("DRAW")) {
+                            System.out.println("Draw");
+                        }
                         player = changeTurn(player, playerX, playerO);
                     }
-                    emptyGameGrid(Main.gameGrid);
+                    Main.gameGrid = emptyGameGrid(gameGrid);
                     countMoves = 0;
                     gameState = checkGameState(gameGrid);
                 } else {
-                    System.out.println("Bad parameters!");
+                    System.out.println("Bad parameters!"); // if 2nd and 3rd input words are not "user" / "easy" / "medium"
                 }
             } else {
-                System.out.println("Bad parameters!");
+                System.out.println("Bad parameters!"); // if 1st word is not "start".
             }
         }
         Main.gameGrid = emptyGameGrid(gameGrid);
+        countMoves = 0;
     }
-
-/*            // Ask user to make a move.
-            System.out.println("Player " + playerSymbol + " turn.");
-            userMove(scanner, gameGrid, playerSymbol);
-
-            // Check the game state after the user's move.
-            gameState = checkGameState(gameGrid);
-
-            // If the game is not over, change the player turn and continue the loop.
-            if (gameState.equals("RUNNING")) {
-                playerSymbol = changeTurn(playerSymbol);
-            }
-        }
-
-        scanner.close(); // Close the scanner.
-
-        // The game has ended. Show the final game state.
-        if (gameState.equals("DRAW")) {
-            System.out.println("Draw");
-        } else {
-            System.out.println("Player " + playerSymbol + " wins");*/
-
 
     /**
      * Function to show the menu for a new game or to exit the program.
@@ -142,8 +136,8 @@ public class Main {
         // Check all horizontal, vertical and diagonal lines for winners and return string declaring who won.
         for (char[] line: checkLines) {
             if (line[0] == line[1] && line[1] == line[2] && line[0] != ' ') {
-                System.out.println(line[0] + " wins");
-                return "gameWON"; // if the game has a winner: return "gameWON" as the gameState.
+//                System.out.println(line[0] + " wins");
+                return playerSymbol + "WIN"; // if the game has a winner: return "XWIN" or "OWIN" as the gameState.
             }
         }
 
@@ -159,7 +153,7 @@ public class Main {
             }
         }
         if (emptyCells == 0){
-            System.out.println("Draw");
+//            System.out.println("Draw");
             return "DRAW";} // if the game has a no winner and no more empty cells: return "DRAW" as the gameState.
 
         // If both the isFilled loop and gameWON loop do not return anything: return "RUNNING" as the gameState.
@@ -169,6 +163,7 @@ public class Main {
     private static void makeMove(char[][] gameGrid, String player, int countMoves) {
         if (player.equals("user")){userMove(gameGrid, countMoves);}
         if (player.equals("easy")){easyAIMove(gameGrid, countMoves);}
+        if (player.equals("medium")){mediumAIMove(gameGrid, countMoves);}
     }
 
     /**
@@ -232,6 +227,99 @@ public class Main {
                 loop = false;
             }
         } while (loop);
+    }
+
+    /**
+     * Function for AI to make a medium move.
+     * @param gameGrid get gameGrid to make move on
+     */
+    private static void mediumAIMove(char[][] gameGrid, int countMoves) {
+        Random random = new Random();
+
+        boolean winMoveMade = false;
+        boolean blockMoveMade = false;
+
+        /*
+         * block move was not working, because checkGameState only checks for current playerSymbol
+         * I introduced these extra variables for trouble-shooting and made it work,
+         * but it could be cleaner.
+         */
+        char currentSymbol;
+        char oppSymbol;
+
+        if (countMoves % 2 == 0) {
+            playerSymbol = 'X';
+            currentSymbol = 'X';
+            oppSymbol = 'O';
+        } else {
+            playerSymbol = 'O';
+            currentSymbol = 'O';
+            oppSymbol = 'X';
+        }
+
+        System.out.println("Making move level \"medium\"");
+
+        // First check if there is any move that can make the AI win the game.
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                if (gameGrid[i][j] == ' ') {
+                    gameGrid[i][j] = playerSymbol;
+                    if (checkGameState(gameGrid).equals(playerSymbol + "WIN")) {
+                        System.out.println("checkGameState " + checkGameState(gameGrid));
+                        System.out.println("WIN move made");
+                        winMoveMade = true;
+                        break;
+                    } else {
+                        gameGrid[i][j] = ' ';
+                    }
+                }
+            }
+            if (winMoveMade) {
+                showGameGrid(gameGrid);
+                break;
+            }
+        }
+
+        // If there is no move that can make the AI win, check if there is any move that can block the opponent.
+        if (!winMoveMade) {
+            for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < 3; j++) {
+                    if (gameGrid[i][j] == ' ') {
+                        gameGrid[i][j] = oppSymbol;
+                        playerSymbol = oppSymbol;
+                        if (checkGameState(gameGrid).equals(oppSymbol + "WIN")) {
+                            gameGrid[i][j] = currentSymbol;
+                            playerSymbol = currentSymbol;
+                            System.out.println("BLOCK move made");
+                            blockMoveMade = true;
+                            break;
+                        } else {
+                            gameGrid[i][j] = ' ';
+                            playerSymbol = currentSymbol;
+                        }
+                    }
+                }
+                if (blockMoveMade) {
+                    showGameGrid(gameGrid);
+                    break;
+                }
+            }
+        }
+
+        if (!winMoveMade && !blockMoveMade) {
+            int x, y;
+            boolean loop = true;
+            do {
+                x = random.nextInt(3);
+                y = random.nextInt(3);
+                if (gameGrid[x][y] == ' ') {
+                    gameGrid[x][y] = playerSymbol;
+                    System.out.println("random move made");
+                    showGameGrid(gameGrid);
+                    loop = false;
+                }
+            } while (loop);
+        }
     }
 
     /**
